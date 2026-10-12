@@ -388,15 +388,24 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         _readerFont.value = font
     }
 
+    fun setFontSize(size: Float) {
+        val clamped = size.coerceIn(14f, 38f)
+        _readingFontSize.value = kotlin.math.round(clamped * 10f) / 10f
+    }
+
+    fun resetFontSize() {
+        _readingFontSize.value = 18f
+    }
+
     fun increaseFontSize() {
-        if (_readingFontSize.value < 34f) {
-            _readingFontSize.value += 2f
+        if (_readingFontSize.value < 38f) {
+            _readingFontSize.value = (_readingFontSize.value + 2f).coerceAtMost(38f)
         }
     }
 
     fun decreaseFontSize() {
         if (_readingFontSize.value > 14f) {
-            _readingFontSize.value -= 2f
+            _readingFontSize.value = (_readingFontSize.value - 2f).coerceAtLeast(14f)
         }
     }
 

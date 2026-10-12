@@ -115,6 +115,8 @@ fun HymnalApp(viewModel: HymnViewModel) {
                             },
                             onPreviousHymn = { viewModel.navigateToAdjacentHymn(-1) },
                             onNextHymn = { viewModel.navigateToAdjacentHymn(1) },
+                            onSetFontSize = { viewModel.setFontSize(it) },
+                            onResetFontSize = { viewModel.resetFontSize() },
                             onIncreaseFontSize = { viewModel.increaseFontSize() },
                             onDecreaseFontSize = { viewModel.decreaseFontSize() },
                             onSetReadingTheme = { viewModel.setReadingTheme(it) },
