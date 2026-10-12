@@ -1,6 +1,6 @@
-# Himnario Cristiano 📖🎵
+# Cantemos Nuetra Fe 📖🎵
 
-Una aplicación moderna, elegante y reverente para Android diseñada para la alabanza congregacional, estudio personal y directores de adoración. Desarrollada con **Kotlin**, **Jetpack Compose** y **Material Design 3**, con soporte para lectura cómoda en atril o púlpito, persistencia local con **Room Database** y un completo sistema de creación y categorización de himnos.
+Una aplicación moderna, elegante y reverente para Android inspirada en el repertorio de alabanza cristiana y el himnario *Gracia y Devoción*. Desarrollada con **Kotlin**, **Jetpack Compose** y **Material Design 3**, con soporte para lectura cómoda en atril o púlpito, persistencia local con **Room Database** y un completo sistema de creación y categorización de himnos.
 
 ---
 

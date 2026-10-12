@@ -1,6 +1,6 @@
 {
-  "name": "Himnario Cristiano",
-  "description": "Himnario cristiano con diseño agradable, lectura cómoda, búsqueda por número o título, favoritos y editor de letras.",
+  "name": "Cantemos Nuetra Fe",
+  "description": "Himnario cristiano con diseño elegante, categorías temáticas, lectura cómoda, búsqueda por número o título, favoritos y editor de letras.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

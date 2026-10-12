@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Himnario Cristiano"
+rootProject.name = "Cantemos Nuetra Fe"
 
 include(":app")

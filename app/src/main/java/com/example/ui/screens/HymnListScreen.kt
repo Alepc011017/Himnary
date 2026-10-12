@@ -185,7 +185,7 @@ fun HymnListScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "HIMNARIO CRISTIANO",
+                                    text = "CANTEMOS NUETRA FE",
                                     style = MaterialTheme.typography.labelMedium,
                                     letterSpacing = 2.sp,
                                     color = HymnalGoldLight,
