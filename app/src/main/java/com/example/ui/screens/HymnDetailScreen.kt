@@ -1010,41 +1010,7 @@ fun HymnDetailScreen(
                         )
                     }
 
-                    // Personal Notes Section
-                    if (hymn.notes.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = themeCardBg.copy(alpha = 0.7f)
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Bookmark,
-                                        contentDescription = null,
-                                        tint = themeAccentColor,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Notas litúrgicas",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeAccentColor
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = hymn.notes,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = themeTextColor.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-                    }
+
 
                     // Quick copy & edit footer actions
                     Spacer(modifier = Modifier.height(28.dp))

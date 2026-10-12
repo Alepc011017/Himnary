@@ -25,7 +25,8 @@ enum class ReaderFont {
 
 enum class HymnViewMode {
     GROUPED_BY_CATEGORY,
-    ALL_HYMNS
+    ALL_HYMNS,
+    ALPHABETICAL_DICTIONARY
 }
 
 sealed class Screen {
@@ -41,6 +42,16 @@ data class CategoryGroup(
     val isCollapsed: Boolean = false
 )
 
+data class AlphabeticalHymnEntry(
+    val hymn: Hymn,
+    val firstSungLine: String
+)
+
+data class AlphabeticalSection(
+    val letter: Char,
+    val entries: List<AlphabeticalHymnEntry>
+)
+
 data class HymnUiState(
     val hymns: List<Hymn> = emptyList(),
     val filteredHymns: List<Hymn> = emptyList(),
@@ -48,6 +59,9 @@ data class HymnUiState(
     val recentlyReadHymns: List<Hymn> = emptyList(),
     val categories: List<HymnCategory> = emptyList(),
     val categoryGroups: List<CategoryGroup> = emptyList(),
+    val alphabeticalSections: List<AlphabeticalSection> = emptyList(),
+    val availableAlphabetLetters: List<Char> = emptyList(),
+    val selectedAlphabetLetter: Char? = null,
     val viewMode: HymnViewMode = HymnViewMode.GROUPED_BY_CATEGORY,
     val collapsedCategories: Set<String> = emptySet(),
     val currentHymn: Hymn? = null,
@@ -73,6 +87,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow("Todos")
     private val _viewMode = MutableStateFlow(HymnViewMode.GROUPED_BY_CATEGORY)
+    private val _selectedAlphabetLetter = MutableStateFlow<Char?>(null)
     private val _collapsedCategories = MutableStateFlow<Set<String>>(emptySet())
     private val _readingFontSize = MutableStateFlow(18f)
     private val _readingTheme = MutableStateFlow(ReadingTheme.PARCHMENT)
@@ -110,7 +125,8 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
             _isAutoScrolling,
             _autoScrollSpeed,
             _isFullScreen,
-            _feedbackMessage
+            _feedbackMessage,
+            _selectedAlphabetLetter
         ) { values ->
             @Suppress("UNCHECKED_CAST")
             val allHymns = values[0] as List<Hymn>
@@ -133,6 +149,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
             val autoScrollSpeed = values[13] as Float
             val isFullScreen = values[14] as Boolean
             val feedback = values[15] as String?
+            val selectedLetter = values[16] as Char?
 
             // Filter hymns by query and quick category chip
             val filtered = allHymns.filter { hymn ->
@@ -150,6 +167,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                     val cleanQuery = query.trim()
                     hymn.number.toString().contains(cleanQuery) ||
                     hymn.title.contains(cleanQuery, ignoreCase = true) ||
+                    hymn.getFirstSungLine().contains(cleanQuery, ignoreCase = true) ||
                     hymn.lyrics.contains(cleanQuery, ignoreCase = true) ||
                     hymn.chorus.contains(cleanQuery, ignoreCase = true) ||
                     hymn.author.contains(cleanQuery, ignoreCase = true) ||
@@ -200,6 +218,52 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
+            // Build Alphabetical Dictionary Sections
+            // Spanish alphabet comparator: A-Z with Ñ between N and O, and # at the end
+            val letterComparator = Comparator<Char> { a, b ->
+                if (a == b) 0
+                else if (a == '#') 1
+                else if (b == '#') -1
+                else if (a == 'Ñ') {
+                    if (b in 'A'..'N') 1 else -1
+                } else if (b == 'Ñ') {
+                    if (a in 'A'..'N') -1 else 1
+                } else {
+                    a.compareTo(b)
+                }
+            }
+
+            val availableLetters = allHymns
+                .map { it.getFirstSungLetter() }
+                .distinct()
+                .sortedWith(letterComparator)
+
+            val hymnsForAlphabet = if (selectedLetter != null) {
+                filtered.filter { it.getFirstSungLetter() == selectedLetter }
+            } else {
+                filtered
+            }
+
+            val groupedByLetter = hymnsForAlphabet.groupBy { it.getFirstSungLetter() }
+            val sortedSections = groupedByLetter.keys
+                .sortedWith(letterComparator)
+                .map { letter ->
+                    val entries = groupedByLetter[letter]
+                        ?.map { hymn ->
+                            AlphabeticalHymnEntry(
+                                hymn = hymn,
+                                firstSungLine = hymn.getFirstSungLine()
+                            )
+                        }
+                        ?.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.firstSungLine })
+                        ?: emptyList()
+
+                    AlphabeticalSection(
+                        letter = letter,
+                        entries = entries
+                    )
+                }
+
             val current = allHymns.find { it.id == currentHymnId }
             val nextNumber = (allHymns.maxOfOrNull { it.number } ?: 0) + 1
 
@@ -210,6 +274,9 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 recentlyReadHymns = recentHymns,
                 categories = allCategories,
                 categoryGroups = categoryGroups,
+                alphabeticalSections = sortedSections,
+                availableAlphabetLetters = availableLetters,
+                selectedAlphabetLetter = selectedLetter,
                 viewMode = viewMode,
                 collapsedCategories = collapsedCats,
                 currentHymn = current,
@@ -258,6 +325,14 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setViewMode(mode: HymnViewMode) {
         _viewMode.value = mode
+    }
+
+    fun selectAlphabetLetter(letter: Char?) {
+        if (_selectedAlphabetLetter.value == letter) {
+            _selectedAlphabetLetter.value = null // Toggle to show all letters
+        } else {
+            _selectedAlphabetLetter.value = letter
+        }
     }
 
     fun toggleCategoryCollapsed(categoryName: String) {
@@ -327,7 +402,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         chorus: String,
         lyrics: String,
         scriptureRef: String,
-        notes: String
+        notes: String = ""
     ) {
         viewModelScope.launch {
             for (cat in categories) {
@@ -348,7 +423,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 chorus = chorus.trim(),
                 lyrics = lyrics.trim(),
                 scriptureRef = scriptureRef.trim(),
-                notes = notes.trim(),
+                notes = "", // Empty as requested to remove notes
                 updatedAt = System.currentTimeMillis()
             )
 

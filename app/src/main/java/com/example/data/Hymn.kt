@@ -53,4 +53,51 @@ data class Hymn(
             .map { it.trim() }
             .filter { it.isNotEmpty() }
     }
+
+    /**
+     * Obtains the first line actually sung in this hymn ("lo que se va a cantar").
+     * Strips stanza numbering, labels, and opening punctuation marks.
+     * Example: for "1. ¡Santo! ¡Santo!..." -> returns "Santo! ¡Santo!..."
+     * Example: for "1. Señor mi Dios, al contemplar..." -> returns "Señor mi Dios, al contemplar..."
+     */
+    fun getFirstSungLine(): String {
+        val text = lyrics.ifBlank { chorus }.ifBlank { title }
+        for (line in text.lines()) {
+            val trimmed = line.trim()
+            if (trimmed.isEmpty()) continue
+            // Strip stanza prefixes like "1.", "1.-", "1)", "Estrofa 1:", "Coro:"
+            val withoutNum = trimmed.replace(
+                Regex("^(\\d+[.\\-)]|\\(?[0-9]+\\)?|Estrofa\\s*\\d+:?|Coro:?)\\s*", RegexOption.IGNORE_CASE),
+                ""
+            ).trim()
+            // Strip leading quotes or punctuation like ¡, ¿, ", ', «, etc.
+            val cleaned = withoutNum.replace(
+                Regex("^[«“\"'¿¡(\\[{\\s.,;:\\-]+"),
+                ""
+            ).trim()
+            if (cleaned.isNotEmpty()) {
+                return cleaned
+            }
+        }
+        return title.replace(Regex("^[«“\"'¿¡(\\[{\\s.,;:\\-]+"), "").trim()
+    }
+
+    /**
+     * Obtains the initial letter (A-Z, Ñ, or #) of what is sung ("la primera letra de lo que se va a cantar").
+     * Accented vowels (Á, É, Í, Ó, Ú) are normalized to their base vowel for proper Spanish alphabetical indexing.
+     */
+    fun getFirstSungLetter(): Char {
+        val line = getFirstSungLine()
+        if (line.isEmpty()) return '#'
+        val firstRaw = line.first().uppercaseChar()
+        return when (firstRaw) {
+            'Á', 'À', 'Â', 'Ä' -> 'A'
+            'É', 'È', 'Ê', 'Ë' -> 'E'
+            'Í', 'Ì', 'Î', 'Ï' -> 'I'
+            'Ó', 'Ò', 'Ô', 'Ö' -> 'O'
+            'Ú', 'Ù', 'Û', 'Ü' -> 'U'
+            in 'A'..'Z', 'Ñ' -> firstRaw
+            else -> if (firstRaw.isLetter()) firstRaw else '#'
+        }
+    }
 }

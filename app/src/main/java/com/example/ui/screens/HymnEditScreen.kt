@@ -601,36 +601,7 @@ fun HymnEditScreen(
                         }
                     }
 
-                    // Section 4: Notes
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Notas Litúrgicas / Observaciones",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            OutlinedTextField(
-                                value = notesText,
-                                onValueChange = { notesText = it },
-                                placeholder = {
-                                    Text("Ej: Ideal para apertura de culto, cantar con acompañamiento suave.")
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(90.dp)
-                                    .testTag("edit_notes_input"),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
+
 
                     // Bottom Save Button
                     Spacer(modifier = Modifier.height(8.dp))

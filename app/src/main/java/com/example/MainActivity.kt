@@ -79,6 +79,7 @@ fun HymnalApp(viewModel: HymnViewModel) {
                             onSearchChange = { viewModel.setSearchQuery(it) },
                             onCategorySelect = { viewModel.selectCategory(it) },
                             onViewModeChange = { viewModel.setViewMode(it) },
+                            onSelectAlphabetLetter = { viewModel.selectAlphabetLetter(it) },
                             onToggleCategoryCollapse = { viewModel.toggleCategoryCollapsed(it) },
                             onHymnClick = { hymnId ->
                                 viewModel.navigateTo(Screen.Detail(hymnId))
@@ -167,6 +168,7 @@ fun HymnalApp(viewModel: HymnViewModel) {
                             onSearchChange = { viewModel.setSearchQuery(it) },
                             onCategorySelect = { viewModel.selectCategory(it) },
                             onViewModeChange = { viewModel.setViewMode(it) },
+                            onSelectAlphabetLetter = { viewModel.selectAlphabetLetter(it) },
                             onToggleCategoryCollapse = { viewModel.toggleCategoryCollapsed(it) },
                             onHymnClick = { hymnId ->
                                 viewModel.navigateTo(Screen.Detail(hymnId))

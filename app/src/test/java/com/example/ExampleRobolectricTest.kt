@@ -89,4 +89,51 @@ class ExampleRobolectricTest {
     assertTrue(hymn.lastReadAt > 0)
     assertEquals(now, hymn.lastReadAt)
   }
+
+  @Test
+  fun `first sung line extraction strips numbers and punctuation`() {
+    val hymn = Hymn(
+      number = 100,
+      title = "Canto de Prueba",
+      lyrics = "1. ¡Santo! ¡Santo! ¡Santo! Señor omnipotente,\nSiempre el labio mío loores te dará;"
+    )
+    val sungLine = hymn.getFirstSungLine()
+    assertEquals("Santo! ¡Santo! ¡Santo! Señor omnipotente,", sungLine)
+    assertEquals('S', hymn.getFirstSungLetter())
+  }
+
+  @Test
+  fun `first sung letter indexes by what is sung rather than title`() {
+    // User explicit prompt: "por ejemplo 'Señor mi Dios....' este se enumeraria por la 'S'"
+    val hymn = Hymn(
+      number = 400,
+      title = "Cuán Grande Es Él",
+      lyrics = "1. Señor mi Dios, al contemplar los cielos,\nEl firmamento y las estrellas mil..."
+    )
+    assertEquals("Señor mi Dios, al contemplar los cielos,", hymn.getFirstSungLine())
+    assertEquals('S', hymn.getFirstSungLetter())
+  }
+
+  @Test
+  fun `first sung letter normalizes accented vowels for dictionary`() {
+    val hymn = Hymn(
+      number = 200,
+      title = "Cielos Abiertos",
+      lyrics = "1. Ábranse los cielos con loor,\nCanten los querubines al Señor"
+    )
+    assertEquals("Ábranse los cielos con loor,", hymn.getFirstSungLine())
+    assertEquals('A', hymn.getFirstSungLetter())
+  }
+
+  @Test
+  fun `alphabetical index categorizes hymns under appropriate letters`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val hymns = SampleHymns.loadHymns(context)
+
+    val sHymns = hymns.filter { it.getFirstSungLetter() == 'S' }
+    assertTrue("Should find hymns starting with S", sHymns.isNotEmpty())
+
+    val aHymns = hymns.filter { it.getFirstSungLetter() == 'A' }
+    assertTrue("Should find hymns starting with A", aHymns.isNotEmpty())
+  }
 }
