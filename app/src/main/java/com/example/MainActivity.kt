@@ -94,6 +94,9 @@ fun HymnalApp(viewModel: HymnViewModel) {
                             },
                             onDeleteCategory = { cat ->
                                 viewModel.deleteCategory(cat)
+                            },
+                            onClearRecentHistory = {
+                                viewModel.clearReadingHistory()
                             }
                         )
                     }
@@ -179,6 +182,9 @@ fun HymnalApp(viewModel: HymnViewModel) {
                             },
                             onDeleteCategory = { cat ->
                                 viewModel.deleteCategory(cat)
+                            },
+                            onClearRecentHistory = {
+                                viewModel.clearReadingHistory()
                             }
                         )
                     }

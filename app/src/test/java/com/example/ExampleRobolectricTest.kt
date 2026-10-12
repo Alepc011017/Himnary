@@ -47,4 +47,16 @@ class ExampleRobolectricTest {
     assertTrue(hymn.hasCategory("Adoración"))
     assertTrue(hymn.hasCategory("Culto Dominical"))
   }
+
+  @Test
+  fun `hymn recent reading timestamp tracks properly`() {
+    val now = System.currentTimeMillis()
+    val hymn = Hymn(
+      number = 5,
+      title = "En la Cruz",
+      lastReadAt = now
+    )
+    assertTrue(hymn.lastReadAt > 0)
+    assertEquals(now, hymn.lastReadAt)
+  }
 }

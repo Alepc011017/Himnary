@@ -54,6 +54,15 @@ Una aplicación moderna, elegante y reverente para Android diseñada para la ala
 
 ---
 
+### 🕒 Historial y Leídos Recientemente
+* **Registro Automático:** Cada vez que abres un himno, se guarda automáticamente en tu historial de lectura con su marca de tiempo.
+* **Carrusel Destacado:** Sección horizontal en la parte superior de la pantalla principal que muestra tus últimos himnos leídos con acceso instantáneo en 1 toque.
+* **Indicador de Tiempo Relativo:** Muestra cuándo fue leído (*Hace un momento*, *Hace 15 min*, *Hoy*, *Ayer*).
+* **Filtro Rápido *"Recientes"*:** Chip en la barra de categorías para filtrar toda la lista por los himnos que has cantado o consultado últimamente.
+* **Limpiar Historial:** Botón discreto para vaciar el historial cuando desees comenzar de nuevo.
+
+---
+
 ## 🛠️ Arquitectura y Tecnologías
 
 * **Lenguaje:** Kotlin

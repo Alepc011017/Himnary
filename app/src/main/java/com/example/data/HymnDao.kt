@@ -16,6 +16,9 @@ interface HymnDao {
     @Query("SELECT * FROM hymns WHERE isFavorite = 1 ORDER BY number ASC")
     fun getFavoriteHymns(): Flow<List<Hymn>>
 
+    @Query("SELECT * FROM hymns WHERE lastReadAt > 0 ORDER BY lastReadAt DESC LIMIT :limit")
+    fun getRecentlyReadHymns(limit: Int = 12): Flow<List<Hymn>>
+
     @Query("SELECT * FROM hymns WHERE id = :id LIMIT 1")
     fun getHymnById(id: Int): Flow<Hymn?>
 
@@ -48,6 +51,12 @@ interface HymnDao {
 
     @Query("UPDATE hymns SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavorite(id: Int, isFavorite: Boolean)
+
+    @Query("UPDATE hymns SET lastReadAt = :timestamp WHERE id = :id")
+    suspend fun updateLastRead(id: Int, timestamp: Long)
+
+    @Query("UPDATE hymns SET lastReadAt = 0")
+    suspend fun clearAllRecent()
 
     @Query("""
         SELECT * FROM hymns 

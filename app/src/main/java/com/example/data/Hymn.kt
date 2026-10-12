@@ -17,6 +17,7 @@ data class Hymn(
     val scriptureRef: String = "",
     val notes: String = "",
     val isFavorite: Boolean = false,
+    val lastReadAt: Long = 0L, // Timestamp of last time user opened/read this hymn
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {

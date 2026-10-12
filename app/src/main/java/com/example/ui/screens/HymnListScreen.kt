@@ -37,7 +37,9 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -97,13 +100,14 @@ fun HymnListScreen(
     onFavoriteToggle: (Hymn) -> Unit,
     onAddNewHymn: () -> Unit,
     onCreateCategory: (String, String) -> Unit,
-    onDeleteCategory: (HymnCategory) -> Unit
+    onDeleteCategory: (HymnCategory) -> Unit,
+    onClearRecentHistory: () -> Unit
 ) {
     var showQuickNumberDialog by remember { mutableStateOf(false) }
     var showManageCategoriesDialog by remember { mutableStateOf(false) }
 
     val filterChips = remember(uiState.categories) {
-        listOf("Todos", "Favoritos", "Sin Letra") + uiState.categories.map { it.name }
+        listOf("Todos", "Recientes", "Favoritos", "Sin Letra") + uiState.categories.map { it.name }
     }
 
     Scaffold(
@@ -323,7 +327,6 @@ fun HymnListScreen(
                         .padding(3.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Grouped Tab
                     val isGrouped = uiState.viewMode == HymnViewMode.GROUPED_BY_CATEGORY
                     Surface(
                         onClick = { onViewModeChange(HymnViewMode.GROUPED_BY_CATEGORY) },
@@ -354,7 +357,6 @@ fun HymnListScreen(
                         }
                     }
 
-                    // Flat List Tab
                     val isFlat = uiState.viewMode == HymnViewMode.ALL_HYMNS
                     Surface(
                         onClick = { onViewModeChange(HymnViewMode.ALL_HYMNS) },
@@ -389,14 +391,13 @@ fun HymnListScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Category Chips Row with "+ Nueva Categoría" Button
+            // Category Chips Row with "+ Categoría" Button
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Manage Categories button
                 item {
                     Surface(
                         onClick = { showManageCategoriesDialog = true },
@@ -438,29 +439,45 @@ fun HymnListScreen(
                         label = {
                             if (category == "Sin Letra" && missingCount > 0) {
                                 Text(text = "Sin Letra ($missingCount)")
+                            } else if (category == "Recientes" && uiState.recentlyReadHymns.isNotEmpty()) {
+                                Text(text = "Recientes (${uiState.recentlyReadHymns.size})")
                             } else {
                                 Text(text = category)
                             }
                         },
-                        leadingIcon = if (category == "Favoritos") {
-                            {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (isSelected) HymnalBurgundy else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        leadingIcon = when (category) {
+                            "Recientes" -> {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.History,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isSelected) HymnalGold else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                        } else if (category == "Sin Letra") {
-                            {
-                                Icon(
-                                    imageVector = Icons.Default.EditNote,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (isSelected) HymnalGold else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            "Favoritos" -> {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.Favorite,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isSelected) HymnalBurgundy else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                        } else null,
+                            "Sin Letra" -> {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.EditNote,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isSelected) HymnalGold else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            else -> null
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -468,6 +485,76 @@ fun HymnListScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.testTag("filter_chip_$category")
                     )
+                }
+            }
+
+            // RECENTLY READ HYMNS CAROUSEL SECTION
+            if (uiState.recentlyReadHymns.isNotEmpty() && uiState.searchQuery.isBlank() && uiState.selectedCategory == "Todos") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 4.dp)
+                        .testTag("recently_read_section")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = HymnalGold,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Leídos Recientemente",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = HymnalGold.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "${uiState.recentlyReadHymns.size}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = HymnalGoldDark,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        TextButton(
+                            onClick = onClearRecentHistory,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = Modifier.testTag("clear_recent_button")
+                        ) {
+                            Text("Limpiar", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(uiState.recentlyReadHymns, key = { "recent_${it.id}" }) { hymn ->
+                            RecentHymnCard(
+                                hymn = hymn,
+                                onClick = { onHymnClick(hymn.id) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -583,6 +670,111 @@ fun HymnListScreen(
                 onDeleteCategory(cat)
             }
         )
+    }
+}
+
+@Composable
+fun RecentHymnCard(
+    hymn: Hymn,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(190.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .testTag("recent_hymn_card_${hymn.number}"),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, HymnalGold.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(HymnalNavy)
+                        .border(1.dp, HymnalGold.copy(alpha = 0.6f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "#${hymn.number}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = HymnalGoldLight
+                    )
+                }
+
+                // First category badge or tone
+                val firstCategory = hymn.getCategories().firstOrNull() ?: "Himno"
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = firstCategory,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = hymn.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Relative time indicator
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(12.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                val timeLabel = remember(hymn.lastReadAt) {
+                    val diff = System.currentTimeMillis() - hymn.lastReadAt
+                    when {
+                        diff < 60_000L -> "Hace un momento"
+                        diff < 3600_000L -> "Hace ${diff / 60_000L} min"
+                        diff < 86400_000L -> "Hoy"
+                        diff < 172800_000L -> "Ayer"
+                        else -> "Reciente"
+                    }
+                }
+                Text(
+                    text = timeLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
     }
 }
 

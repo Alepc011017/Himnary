@@ -45,6 +45,7 @@ data class HymnUiState(
     val hymns: List<Hymn> = emptyList(),
     val filteredHymns: List<Hymn> = emptyList(),
     val favoriteHymns: List<Hymn> = emptyList(),
+    val recentlyReadHymns: List<Hymn> = emptyList(),
     val categories: List<HymnCategory> = emptyList(),
     val categoryGroups: List<CategoryGroup> = emptyList(),
     val viewMode: HymnViewMode = HymnViewMode.GROUPED_BY_CATEGORY,
@@ -96,6 +97,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         uiState = combine(
             repository.allHymns,
             repository.favoriteHymns,
+            repository.recentlyReadHymns,
             repository.allCategories,
             _searchQuery,
             _selectedCategory,
@@ -115,25 +117,28 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
             @Suppress("UNCHECKED_CAST")
             val favHymns = values[1] as List<Hymn>
             @Suppress("UNCHECKED_CAST")
-            val allCategories = values[2] as List<HymnCategory>
-            val query = values[3] as String
-            val categoryFilter = values[4] as String
-            val viewMode = values[5] as HymnViewMode
+            val recentHymns = values[2] as List<Hymn>
             @Suppress("UNCHECKED_CAST")
-            val collapsedCats = values[6] as Set<String>
-            val fontSize = values[7] as Float
-            val readingTheme = values[8] as ReadingTheme
-            val readerFont = values[9] as ReaderFont
-            val currentHymnId = values[10] as Int?
-            val isAutoScrolling = values[11] as Boolean
-            val autoScrollSpeed = values[12] as Float
-            val isFullScreen = values[13] as Boolean
-            val feedback = values[14] as String?
+            val allCategories = values[3] as List<HymnCategory>
+            val query = values[4] as String
+            val categoryFilter = values[5] as String
+            val viewMode = values[6] as HymnViewMode
+            @Suppress("UNCHECKED_CAST")
+            val collapsedCats = values[7] as Set<String>
+            val fontSize = values[8] as Float
+            val readingTheme = values[9] as ReadingTheme
+            val readerFont = values[10] as ReaderFont
+            val currentHymnId = values[11] as Int?
+            val isAutoScrolling = values[12] as Boolean
+            val autoScrollSpeed = values[13] as Float
+            val isFullScreen = values[14] as Boolean
+            val feedback = values[15] as String?
 
             // Filter hymns by query and quick category chip
             val filtered = allHymns.filter { hymn ->
                 val matchesCategory = when (categoryFilter) {
                     "Todos" -> true
+                    "Recientes" -> hymn.lastReadAt > 0L
                     "Favoritos" -> hymn.isFavorite
                     "Sin Letra" -> !hymn.hasText
                     else -> hymn.hasCategory(categoryFilter)
@@ -162,7 +167,6 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
             for (cat in allCategories) {
                 processedCategoryNames.add(cat.name.lowercase())
                 val hymnsInCat = filtered.filter { it.hasCategory(cat.name) }
-                // Only show category in grouped view if it has hymns (or if no search filter is active)
                 if (hymnsInCat.isNotEmpty() || (query.isBlank() && categoryFilter == "Todos")) {
                     categoryGroups.add(
                         CategoryGroup(
@@ -174,7 +178,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            // 2. Discover any extra custom categories written in hymns that are not yet in allCategories
+            // 2. Discover extra custom categories written in hymns that are not yet in allCategories
             val extraCategoryNames = filtered.flatMap { it.getCategories() }
                 .distinct()
                 .filter { it.lowercase() !in processedCategoryNames }
@@ -203,6 +207,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 hymns = allHymns,
                 filteredHymns = filtered,
                 favoriteHymns = favHymns,
+                recentlyReadHymns = recentHymns,
                 categories = allCategories,
                 categoryGroups = categoryGroups,
                 viewMode = viewMode,
@@ -230,6 +235,10 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         _isAutoScrolling.value = false
         if (screen is Screen.Detail) {
             _currentHymnId.value = screen.hymnId
+            // Automatically record as recently read
+            viewModelScope.launch {
+                repository.recordHymnRead(screen.hymnId)
+            }
         }
         _screenState.value = screen
     }
@@ -285,6 +294,13 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun clearReadingHistory() {
+        viewModelScope.launch {
+            repository.clearReadingHistory()
+            showFeedback("Historial de lectura borrado")
+        }
+    }
+
     fun createCategory(name: String, colorHex: String = "#1B365D") {
         val cleanName = name.trim()
         if (cleanName.isBlank()) return
@@ -314,7 +330,6 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
         notes: String
     ) {
         viewModelScope.launch {
-            // Also ensure any newly typed category is stored in the database categories
             for (cat in categories) {
                 if (cat.isNotBlank()) {
                     repository.addCategory(cat)
@@ -376,6 +391,9 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
                 val targetHymn = hymns[targetIndex]
                 _currentHymnId.value = targetHymn.id
                 _screenState.value = Screen.Detail(targetHymn.id)
+                viewModelScope.launch {
+                    repository.recordHymnRead(targetHymn.id)
+                }
             }
         }
     }

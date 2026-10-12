@@ -9,7 +9,16 @@ class HymnRepository(
 
     val allHymns: Flow<List<Hymn>> = hymnDao.getAllHymns()
     val favoriteHymns: Flow<List<Hymn>> = hymnDao.getFavoriteHymns()
+    val recentlyReadHymns: Flow<List<Hymn>> = hymnDao.getRecentlyReadHymns(12)
     val allCategories: Flow<List<HymnCategory>> = categoryDao.getAllCategories()
+
+    suspend fun recordHymnRead(id: Int) {
+        hymnDao.updateLastRead(id, System.currentTimeMillis())
+    }
+
+    suspend fun clearReadingHistory() {
+        hymnDao.clearAllRecent()
+    }
 
     fun getHymnById(id: Int): Flow<Hymn?> = hymnDao.getHymnById(id)
 
