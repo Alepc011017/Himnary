@@ -87,7 +87,7 @@ class HymnViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val database = AppDatabase.getDatabase(application)
-        repository = HymnRepository(database.hymnDao(), database.categoryDao())
+        repository = HymnRepository(database.hymnDao(), database.categoryDao(), application)
 
         // Ensure database has initial hymns and categories
         viewModelScope.launch {

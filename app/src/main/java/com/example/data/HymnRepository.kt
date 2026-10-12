@@ -1,10 +1,12 @@
 package com.example.data
 
+import android.content.Context
 import kotlinx.coroutines.flow.Flow
 
 class HymnRepository(
     private val hymnDao: HymnDao,
-    private val categoryDao: CategoryDao
+    private val categoryDao: CategoryDao,
+    private val context: Context? = null
 ) {
 
     val allHymns: Flow<List<Hymn>> = hymnDao.getAllHymns()
@@ -69,18 +71,32 @@ class HymnRepository(
     }
 
     suspend fun checkAndSeedInitialData() {
-        if (hymnDao.getCount() == 0) {
+        val hymnCount = hymnDao.getCount()
+        // If count is less than 400 (or empty), seed all 424 hymns from Gracia y Devoción
+        if (hymnCount < 400 && context != null) {
+            val hymns = SampleHymns.loadHymns(context)
+            if (hymns.isNotEmpty()) {
+                hymnDao.insertAll(hymns)
+            }
+        } else if (hymnCount == 0) {
             hymnDao.insertAll(SampleHymns.initialHymns)
         }
+
         if (categoryDao.getCount() == 0) {
             categoryDao.insertAll(SampleHymns.defaultCategories)
+        } else {
+            // Ensure essential categories (Navidad, Hogar y Familia, Niños, Resurrección, etc.) exist
+            for (cat in SampleHymns.defaultCategories) {
+                if (categoryDao.getCategoryByName(cat.name) == null) {
+                    categoryDao.insertCategory(cat)
+                }
+            }
         }
     }
 
     suspend fun resetToSampleData() {
-        for (hymn in SampleHymns.initialHymns) {
-            hymnDao.insertHymn(hymn)
-        }
+        val hymns = if (context != null) SampleHymns.loadHymns(context) else SampleHymns.initialHymns
+        hymnDao.insertAll(hymns)
         categoryDao.insertAll(SampleHymns.defaultCategories)
     }
 }

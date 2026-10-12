@@ -3,7 +3,9 @@ package com.example
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.Hymn
+import com.example.data.SampleHymns
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,6 +21,34 @@ class ExampleRobolectricTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val appName = context.getString(R.string.app_name)
     assertEquals("Cantemos Nuetra Fe", appName)
+  }
+
+  @Test
+  fun `load all 424 hymns from assets`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val hymns = SampleHymns.loadHymns(context)
+    assertEquals(424, hymns.size)
+
+    val hymn1 = hymns.find { it.number == 1 }
+    assertNotNull(hymn1)
+    assertEquals("Del Culto El Tiempo Llega", hymn1?.title)
+
+    val hymn424 = hymns.find { it.number == 424 }
+    assertNotNull(hymn424)
+    assertEquals("A Dios El Padre", hymn424?.title)
+
+    // Verify key categories exist among hymns
+    val navidadHymns = hymns.filter { it.hasCategory("Navidad") }
+    assertTrue(navidadHymns.isNotEmpty())
+
+    val ninosHymns = hymns.filter { it.hasCategory("Niños") }
+    assertTrue(ninosHymns.isNotEmpty())
+
+    val resurreccionHymns = hymns.filter { it.hasCategory("Resurrección") }
+    assertTrue(resurreccionHymns.isNotEmpty())
+
+    val hogarHymns = hymns.filter { it.hasCategory("Hogar y Familia") }
+    assertTrue(hogarHymns.isNotEmpty())
   }
 
   @Test

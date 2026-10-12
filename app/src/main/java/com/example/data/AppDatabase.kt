@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Hymn::class, HymnCategory::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,18 +25,20 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
+                val appContext = context.applicationContext
                 val instance = Room.databaseBuilder(
-                    context.applicationContext,
+                    appContext,
                     AppDatabase::class.java,
                     "himnario_database"
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        // Pre-populate with initial hymns and default categories
+                        // Pre-populate with all 424 hymns from Gracia y Devoción
                         INSTANCE?.let { database ->
                             CoroutineScope(Dispatchers.IO).launch {
-                                database.hymnDao().insertAll(SampleHymns.initialHymns)
+                                val hymns = SampleHymns.loadHymns(appContext)
+                                database.hymnDao().insertAll(hymns)
                                 database.categoryDao().insertAll(SampleHymns.defaultCategories)
                             }
                         }
